@@ -96,7 +96,7 @@ export async function POST(req: Request) {
 
 
         const result = await model.generateContent([
-            textContent + '\n\nPlease generate many questions. Each question should be in the following structure: {question: "", options: ["a", "b", "c", "d"], correctAnswer: 2 //c }.',
+            textContent + '\n\nPlease generate many questions. Each question should be in the following format: {"question": "", "options": ["a", "b", "c", "d"], "correctAnswer": 2 /* c */}. The output should be valid JSON with no other explanation or text.'
         ]);
 
         const generatedText = await result.response.text();
