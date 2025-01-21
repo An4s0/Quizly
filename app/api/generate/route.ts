@@ -3,6 +3,12 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { PdfReader } from 'pdfreader';
 import mammoth from 'mammoth';
 
+interface QuizQuestion {
+    question: string;
+    options: string[];
+    correctAnswer: number;
+}
+
 async function readPdfContent(buffer: Buffer): Promise<string> {
     try {
         return new Promise((resolve, reject) => {
@@ -40,7 +46,6 @@ async function readFileContent(file: any) {
 
     const fileName = (file as File).name;
     const fileExtension = fileName.split('.').pop()?.toLowerCase();
-    console.log(fileExtension);
 
     const arrayBuffer = await file.arrayBuffer();
     const dataBuffer = Buffer.from(arrayBuffer);
@@ -54,6 +59,17 @@ async function readFileContent(file: any) {
         default:
             return NextResponse.json({ error: "Invalid file type" }, { status: 400 });
     }
+}
+
+// Thie part is not written by me.
+function isValidQuizQuestion(question: any): question is QuizQuestion {
+    return (
+        typeof question === 'object' &&
+        typeof question.question === 'string' &&
+        Array.isArray(question.options) &&
+        question.options.every((opt: any) => typeof opt === 'string') &&
+        typeof question.correctAnswer === 'number'
+    );
 }
 
 export async function POST(req: Request) {
@@ -84,15 +100,20 @@ export async function POST(req: Request) {
         ]);
 
         const generatedText = await result.response.text();
-        const toJson = generatedText.split("```")[1].split("json").pop()
+        const toJson = generatedText.split("```json")[1]?.split("```")[0];
 
         if (!toJson) {
             return NextResponse.json({ error: "Error processing file" }, { status: 500 });
         }
 
-        return NextResponse.json({
-            status: "success", questions: JSON.parse(generatedText)
-        });
+        const parsedQuestions = JSON.parse(toJson.trim());
+
+        if (Array.isArray(parsedQuestions) && parsedQuestions.every(isValidQuizQuestion)) {
+            return NextResponse.json({ status: "success", questions: parsedQuestions });
+        } else {
+            throw new Error("Invalid question format");
+        }
+
     } catch (error) {
         console.error(error);
         return NextResponse.json({ error: "Error processing file" }, { status: 500 });

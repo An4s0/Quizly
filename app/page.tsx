@@ -94,45 +94,45 @@ export default function Home() {
     if (e) {
       e.preventDefault();
     }
-  
+
     setIsLoading(true);
     setLoadingProgress(0);
-    setError(null); 
-  
+    setError(null);
+
     const simulateProgress = async () => {
       for (let i = 0; i <= 100; i += 10) {
         await new Promise((resolve) => setTimeout(resolve, 200));
         setLoadingProgress(i);
       }
     };
-  
+
     try {
-      
-  
+
+
       if (!file) {
         setError("Please select a file first.");
         return;
       }
-  
+
       const apiKeyStored = localStorage.getItem("apiKey");
       if (!apiKeyStored) {
         localStorage.setItem("apiKey", apiKey);
       }
-  
+
       const formData = new FormData();
       formData.append('file', file);
       formData.append('apiKey', apiKeyStored || apiKey);
-  
+
       const response = await fetch("/api/generate", {
         method: "POST",
         body: formData,
       });
-  
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || "Error uploading file");
       }
-  
+
       const data = await response.json();
       await simulateProgress();
       if (data.error) {
@@ -185,30 +185,6 @@ export default function Home() {
                 className="bg-[#5865F2] h-2 rounded-full transition-all duration-500 ease-out"
                 style={{ width: `${loadingProgress}%` }}
               />
-            </div>
-
-            <div className="flex items-start gap-3 text-sm text-gray-500 bg-[#ffffff]/[0.02] p-4 rounded-xl">
-              <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="font-medium text-gray-400 mb-1">Processing Steps</p>
-                <ul className="space-y-2">
-                  <li className={loadingProgress >= 20 ? 'text-[#5865F2]' : ''}>
-                    ✓ Analyzing content
-                  </li>
-                  <li className={loadingProgress >= 40 ? 'text-[#5865F2]' : ''}>
-                    ✓ Extracting key concepts
-                  </li>
-                  <li className={loadingProgress >= 60 ? 'text-[#5865F2]' : ''}>
-                    ✓ Generating questions
-                  </li>
-                  <li className={loadingProgress >= 80 ? 'text-[#5865F2]' : ''}>
-                    ✓ Creating answer options
-                  </li>
-                  <li className={loadingProgress >= 100 ? 'text-[#5865F2]' : ''}>
-                    ✓ Finalizing quiz
-                  </li>
-                </ul>
-              </div>
             </div>
           </div>
         </div>
