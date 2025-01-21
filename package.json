@@ -1,6 +1,6 @@
 {
   "name": "quiz",
-  "version": "0.1.0",
+  "version": "1.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -8,10 +8,24 @@
     "start": "next start",
     "lint": "next lint"
   },
+  "author": {
+    "name": "Anas Almutary",
+    "url": "https://ianas.me"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/An4s0/Quizly.git"
+  },
+  "bugs": {
+    "url": "https://github.com/An4s0/Quizly/issues"
+  },
   "dependencies": {
     "@google/generative-ai": "^0.19.0",
+    "axios": "^1.7.9",
+    "lucide-react": "^0.473.0",
     "mammoth": "^1.8.0",
     "next": "14.2.13",
+    "openai": "^4.79.3",
     "pdfreader": "^3.0.5",
     "react": "^18",
     "react-dom": "^18"

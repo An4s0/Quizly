@@ -46,8 +46,6 @@ async function readFileContent(file: any) {
     const dataBuffer = Buffer.from(arrayBuffer);
 
     switch (fileExtension) {
-        case 'txt':
-            return dataBuffer.toString();
         case 'pdf':
             return await readPdfContent(dataBuffer);
         case 'docx':
@@ -61,29 +59,40 @@ async function readFileContent(file: any) {
 export async function POST(req: Request) {
     try {
         const formData = await req.formData();
+        const apiKey = formData.get('apiKey');
+        if (!apiKey) {
+            return NextResponse.json({ error: "API key is missing" }, { status: 401 });
+        }
         const file = formData.get('file');
+
+        if (!file) {
+            return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
+        }
 
         const textContent = await readFileContent(file);
 
-        const genAI = new GoogleGenerativeAI("Your API Key");
+        if (!textContent) {
+            return NextResponse.json({ error: "File is empty or unreadable" }, { status: 400 });
+        }
+
+        const genAI = new GoogleGenerativeAI(formData.get('apiKey') as string);
         const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
+
         const result = await model.generateContent([
-            textContent + '\n\n Please generate 3 questions from each paragraph and 4 answers for each question in JSON format. Each question should be in the following structure: {question: String, answers: [{answer: String, isCorrect: Boolean}], explanation: String}.'
+            textContent + '\n\nPlease generate many questions. Each question should be in the following structure: {question: "", options: ["a", "b", "c", "d"], correctAnswer: 2 //c }.',
         ]);
 
         const generatedText = await result.response.text();
-        const jsonContent = generatedText.split('```json')[1]?.split('```')[0]?.trim();
-        if (!jsonContent) return NextResponse.json({ error: "No questions generated" }, { status: 500 });
+        const toJson = generatedText.split("```")[1].split("json").pop()
 
-        let questionsArray;
-        try {
-            questionsArray = JSON.parse(jsonContent);
-        } catch (error) {
-            return NextResponse.json({ error: "Error parsing JSON" + error }, { status: 500 });
+        if (!toJson) {
+            return NextResponse.json({ error: "Error processing file" }, { status: 500 });
         }
 
-        return NextResponse.json({ status: "success", questions: questionsArray });
+        return NextResponse.json({
+            status: "success", questions: JSON.parse(generatedText)
+        });
     } catch (error) {
         console.error(error);
         return NextResponse.json({ error: "Error processing file" }, { status: 500 });
