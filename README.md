@@ -3,10 +3,13 @@
 </p>
 
 
-
 # **Quizly**
 
 Quizly is a web application that transforms your content into engaging quizzes in seconds. Upload a file (PDF, DOC, or DOCX), and Quizly will generate a quiz with multiple-choice questions based on the content.
+
+<p align="center">
+  <img src="https://i.imgur.com/NL0lY0s.png" alt="Image">
+</p>
 
 ## Features
 
