@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import axios from 'axios';
 import readFileContent from '@helpers/readFileContent';
+import fs from 'fs'
 
 interface QuizQuestion {
     question: string;
@@ -49,16 +50,21 @@ export async function POST(req: Request) {
             },
         });
 
-        const assistantResponse = response.data.choices[0].message.content;
+        if (!response.data?.choices || !response.data.choices.length) {
+            console.error('Invalid or empty response from DeepSeek API');
+            return NextResponse.json({ error: "Failed to generate quiz questions" }, { status: 500 });
+        }
 
-        const cleanedResponse = assistantResponse.replace(/```json|```/g, '').trim();
+        const aiRes = response.data.choices[0].message.content;
+
+        const jsonRes = aiRes.replace(/```json|```/g, '').trim();
 
         let quizQuestions: QuizQuestion[] = [];
         try {
-            quizQuestions = JSON.parse(cleanedResponse);
+            quizQuestions = JSON.parse(jsonRes);
         } catch (error) {
             console.error('Failed to parse quiz questions:', error);
-            console.error('Response content:', cleanedResponse);
+            console.error('Response content:', jsonRes);
             return NextResponse.json({ error: "Failed to generate quiz questions" }, { status: 500 });
         }
 
