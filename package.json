@@ -1,6 +1,6 @@
 {
   "name": "quiz",
-  "version": "2.0.0",
+  "version": "2.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -26,7 +26,6 @@
     "lucide-react": "^0.473.0",
     "next": "14.2.13",
     "officeparser": "^5.1.1",
-    "pdfreader": "^3.0.5",
     "react": "^18",
     "react-dom": "^18"
   },
