@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { ArrowRight, RefreshCw, House, Loader2 } from 'lucide-react';
 
 interface QuizQuestion {
@@ -23,11 +23,7 @@ const Quiz: React.FC<QuizProps> = ({ setError, file, setFile, setShowQuiz }) => 
     const [score, setScore] = useState(0);
     const [showScore, setShowScore] = useState(false);
 
-    useEffect(() => {
-        handleStartQuiz();
-    }, []);
-
-    const handleStartQuiz = async (e?: React.FormEvent) => {
+    const handleStartQuiz = useCallback(async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
 
         setIsLoading(true);
@@ -43,7 +39,7 @@ const Quiz: React.FC<QuizProps> = ({ setError, file, setFile, setShowQuiz }) => 
             const formData = new FormData();
             formData.append('file', file);
 
-            // Fake loading progress :)
+            // Fake loading progress
             for (let i = 0; i <= 100; i++) {
                 setTimeout(() => {
                     setLoadingProgress(i);
@@ -76,7 +72,11 @@ const Quiz: React.FC<QuizProps> = ({ setError, file, setFile, setShowQuiz }) => 
             setIsLoading(false);
             setLoadingProgress(0);
         }
-    };
+    }, [file, setError, setShowQuiz]);
+
+    useEffect(() => {
+        handleStartQuiz();
+    }, [handleStartQuiz]);
 
     const resetQuiz = () => {
         setScore(0);

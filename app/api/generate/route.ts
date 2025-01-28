@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import axios from 'axios';
 import readFileContent from '@helpers/readFileContent';
-import fs from 'fs'
 
 interface QuizQuestion {
     question: string;
