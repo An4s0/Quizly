@@ -22,6 +22,7 @@ export async function POST(req: Request) {
         const fileBuffer = Buffer.from(await file.arrayBuffer());
         const fileContent = await readFileContent(fileBuffer, fileExtension);
 
+
         const response = await axios({
             method: 'post',
             maxBodyLength: Infinity,

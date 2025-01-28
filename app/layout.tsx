@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/react" // optional
+import { SpeedInsights } from "@vercel/speed-insights/next" // optional
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -17,6 +19,8 @@ export default function RootLayout({
         <link rel="icon" type="image/png" href="/logo.png" sizes="any" />
       </head>
       <body>
+        <Analytics /> {/*optional*/}
+        <SpeedInsights /> {/*optional*/}
         {children}
       </body>
     </html>

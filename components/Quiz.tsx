@@ -17,13 +17,7 @@ interface QuizProps {
 const Quiz: React.FC<QuizProps> = ({ setError, file, setFile, setShowQuiz }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [loadingProgress, setLoadingProgress] = useState(0);
-    const [questions, setQuestions] = useState<QuizQuestion[]>([
-        {
-            question: "",
-            options: [],
-            correctAnswer: 0
-        }
-    ]);
+    const [questions, setQuestions] = useState<QuizQuestion[]>([]);
     const [currentQuestion, setCurrentQuestion] = useState(0);
     const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
     const [score, setScore] = useState(0);
@@ -49,10 +43,11 @@ const Quiz: React.FC<QuizProps> = ({ setError, file, setFile, setShowQuiz }) => 
             const formData = new FormData();
             formData.append('file', file);
 
+            // Fake loading progress :)
             for (let i = 0; i <= 100; i++) {
                 setTimeout(() => {
                     setLoadingProgress(i);
-                }, i * 400);
+                }, i * 500);
             }
 
             const response = await fetch('/api/generate', {
@@ -152,9 +147,11 @@ const Quiz: React.FC<QuizProps> = ({ setError, file, setFile, setShowQuiz }) => 
                     <House className="w-5 h-5" />
                     Back to Home
                 </button>
-                <div className="text-gray-400">
-                    Question {currentQuestion + 1} of {questions.length}
-                </div>
+                {questions.length > 0 && (
+                    <div className="text-gray-400">
+                        Question {currentQuestion + 1} of {questions.length}
+                    </div>
+                )}
             </div>
 
             {showScore ? (
@@ -173,37 +170,60 @@ const Quiz: React.FC<QuizProps> = ({ setError, file, setFile, setShowQuiz }) => 
                 </div>
             ) : (
                 <>
-                    <div className="bg-[#ffffff]/[0.02] backdrop-blur-sm rounded-2xl p-8 mb-6">
-                        <h2 className="text-2xl font-medium mb-8">
-                            {questions[currentQuestion].question}
-                        </h2>
-                        <div className="grid gap-4">
-                            {questions[currentQuestion].options.map((option, index) => (
-                                <button
-                                    key={index}
-                                    onClick={() => handleAnswerSelect(index)}
-                                    className={`p-4 rounded-xl text-left transition-all duration-300 ${selectedAnswer === index
-                                        ? 'bg-[#5865F2] text-white'
-                                        : 'bg-[#ffffff]/[0.05] hover:bg-[#ffffff]/[0.1]'
-                                        }`}
-                                >
-                                    {option}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
+                    {questions.length > 0 ? (
+                        <>
+                            <div className="bg-[#ffffff]/[0.02] backdrop-blur-sm rounded-2xl p-8 mb-6">
+                                <h2 className="text-2xl font-medium mb-8">
+                                    {questions[currentQuestion].question}
+                                </h2>
+                                <div className="grid gap-4">
+                                    {questions[currentQuestion].options.map((option, index) => (
+                                        <button
+                                            key={index}
+                                            onClick={() => handleAnswerSelect(index)}
+                                            className={`p-4 rounded-xl text-left transition-all duration-300 ${selectedAnswer === index
+                                                ? 'bg-[#5865F2] text-white'
+                                                : 'bg-[#ffffff]/[0.05] hover:bg-[#ffffff]/[0.1]'
+                                                }`}
+                                        >
+                                            {option}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
 
-                    <button
-                        onClick={handleNextQuestion}
-                        disabled={selectedAnswer === null}
-                        className={`w-full py-4 px-6 rounded-xl font-medium text-lg flex items-center justify-center gap-2 transition-all duration-300 ${selectedAnswer === null
-                            ? 'bg-gray-700 cursor-not-allowed'
-                            : 'bg-[#5865F2] hover:bg-[#4752c4]'
-                            }`}
-                    >
-                        {currentQuestion === questions.length - 1 ? 'Finish Quiz' : 'Next Question'}
-                        <ArrowRight className="w-5 h-5" />
-                    </button>
+                            <button
+                                onClick={handleNextQuestion}
+                                disabled={selectedAnswer === null}
+                                className={`w-full py-4 px-6 rounded-xl font-medium text-lg flex items-center justify-center gap-2 transition-all duration-300 ${selectedAnswer === null
+                                    ? 'bg-gray-700 cursor-not-allowed'
+                                    : 'bg-[#5865F2] hover:bg-[#4752c4]'
+                                    }`}
+                            >
+                                {currentQuestion === questions.length - 1 ? 'Finish Quiz' : 'Next Question'}
+                                <ArrowRight className="w-5 h-5" />
+                            </button>
+                        </>
+                    ) : (
+                        <div className="text-center">
+                            <h2 className="text-3xl font-bold mb-6">No Questions Found</h2>
+                            <p className="text-lg mb-8">
+                                Please try again or upload a different file.
+                            </p>
+                            <button
+                                onClick={() => {
+                                    setShowQuiz(false);
+                                    setFile(null);
+                                    setShowQuiz(false);
+                                    setError(null);
+                                }}
+                                className="inline-flex items-center gap-2 bg-[#5865F2] hover:bg-[#4752c4] px-6 py-3 rounded-xl transition-all duration-300"
+                            >
+                                <RefreshCw className="w-5 h-5" />
+                                Try Again
+                            </button>
+                        </div>
+                    )}
                 </>
             )}
         </div>

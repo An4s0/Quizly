@@ -55,7 +55,7 @@ const UploadFile = () => {
                             id="file-upload"
                             className="hidden"
                             onChange={handleFileChange}
-                            accept=",.pdf,.doc,.docx"
+                            accept=",.pdf,.doc,.docx,.ppt,.pptx"
                         />
 
                         <label
@@ -81,7 +81,7 @@ const UploadFile = () => {
                             <div>
                                 <p className="font-medium text-gray-400 mb-1">Supported formats</p>
                                 <p>
-                                    Upload your file in .pdf .doc .docx format.
+                                    Upload your file in .pdf .doc .docx .pptx .ppt format.
                                 </p>
                             </div>
                         </div>

@@ -20,12 +20,12 @@
     "url": "https://github.com/An4s0/Quizly/issues"
   },
   "dependencies": {
-    "@google/generative-ai": "^0.19.0",
+    "@vercel/analytics": "^1.4.1",
+    "@vercel/speed-insights": "^1.1.0",
     "axios": "^1.7.9",
     "lucide-react": "^0.473.0",
-    "mammoth": "^1.8.0",
     "next": "14.2.13",
-    "openai": "^4.79.3",
+    "officeparser": "^5.1.1",
     "pdfreader": "^3.0.5",
     "react": "^18",
     "react-dom": "^18"
