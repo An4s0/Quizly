@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import { PdfReader } from 'pdfreader';
-import mammoth from 'mammoth';
+import axios from 'axios';
+import readFileContent from '@helpers/readFileContent';
 
 interface QuizQuestion {
     question: string;
@@ -9,110 +8,62 @@ interface QuizQuestion {
     correctAnswer: number;
 }
 
-async function readPdfContent(buffer: Buffer): Promise<string> {
-    try {
-        return new Promise((resolve, reject) => {
-            let pdfText = '';
-            const reader = new PdfReader();
-
-            reader.parseBuffer(buffer, (err: any, item: any) => {
-                if (err) {
-                    reject(err);
-                } else if (!item) {
-                    resolve(pdfText);
-                } else if (item.text) {
-                    pdfText += item.text + ' ';
-                }
-            });
-        });
-    } catch (error) {
-        throw new Error('Error reading Pdf file: ' + error);
-    }
-}
-
-async function readWordContent(buffer: Buffer): Promise<string> {
-    try {
-        const result = await mammoth.extractRawText({ buffer });
-        return result.value;
-    } catch (error) {
-        throw new Error('Error reading Word file: ' + error);
-    }
-}
-
-async function readFileContent(file: any) {
-    if (!file || !(file instanceof Blob)) {
-        return NextResponse.json({ error: "No file uploaded or invalid file type" }, { status: 400 });
-    }
-
-    const fileName = (file as File).name;
-    const fileExtension = fileName.split('.').pop()?.toLowerCase();
-
-    const arrayBuffer = await file.arrayBuffer();
-    const dataBuffer = Buffer.from(arrayBuffer);
-
-    switch (fileExtension) {
-        case 'pdf':
-            return await readPdfContent(dataBuffer);
-        case 'docx':
-        case 'doc':
-            return await readWordContent(dataBuffer);
-        default:
-            return NextResponse.json({ error: "Invalid file type" }, { status: 400 });
-    }
-}
-
-// Thie part is not written by me.
-function isValidQuizQuestion(question: any): question is QuizQuestion {
-    return (
-        typeof question === 'object' &&
-        typeof question.question === 'string' &&
-        Array.isArray(question.options) &&
-        question.options.every((opt: any) => typeof opt === 'string') &&
-        typeof question.correctAnswer === 'number'
-    );
-}
-
 export async function POST(req: Request) {
     try {
         const formData = await req.formData();
-        const apiKey = formData.get('apiKey');
-        if (!apiKey) {
-            return NextResponse.json({ error: "API key is missing" }, { status: 401 });
-        }
         const file = formData.get('file');
+        const fileExtension = (file as File).name.split('.').pop()?.toLowerCase();
 
-        if (!file) {
-            return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
+        if (!file) return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
+        if (!(file instanceof File)) return NextResponse.json({ error: "Invalid file uploaded" }, { status: 400 });
+        if (!fileExtension) return NextResponse.json({ error: "Invalid file extension" }, { status: 400 });
+
+        const fileBuffer = Buffer.from(await file.arrayBuffer());
+        const fileContent = await readFileContent(fileBuffer, fileExtension);
+
+        const response = await axios({
+            method: 'post',
+            maxBodyLength: Infinity,
+            url: 'https://api.deepseek.com/chat/completions',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+            },
+            data: {
+                messages: [
+                    {
+                        role: 'system',
+                        content: 'You are a helpful assistant that generates quiz questions based on the provided content. Format the response as a JSON array without any additional text or Markdown syntax.',
+                    },
+                    {
+                        role: 'user',
+                        content: `Generate too many quiz questions based on the following content:\n\n${fileContent}\n\nFormat the questions as a JSON array like this:\n\n[\n  {\n    "question": "What is the capital of France?",\n    "options": ["a", "b", "c", "d"],\n    "correctAnswer": 2\n  }\n]`,
+                    },
+                ],
+                model: "deepseek-chat",
+                response_format: {
+                    type: "text",
+                },
+                temperature: 0.7, 
+                max_tokens: 1000, 
+            },
+        });
+
+        const assistantResponse = response.data.choices[0].message.content;
+
+        const cleanedResponse = assistantResponse.replace(/```json|```/g, '').trim();
+
+        let quizQuestions: QuizQuestion[] = [];
+        try {
+            quizQuestions = JSON.parse(cleanedResponse);
+        } catch (error) {
+            console.error('Failed to parse quiz questions:', error);
+            console.error('Response content:', cleanedResponse);
+            return NextResponse.json({ error: "Failed to generate quiz questions" }, { status: 500 });
         }
 
-        const textContent = await readFileContent(file);
-
-        if (!textContent) {
-            return NextResponse.json({ error: "File is empty or unreadable" }, { status: 400 });
-        }
-
-        const genAI = new GoogleGenerativeAI(formData.get('apiKey') as string);
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-
-
-        const result = await model.generateContent([
-            textContent + '\n\nPlease generate many questions. Each question should be in the following format: {"question": "", "options": ["a", "b", "c", "d"], "correctAnswer": 2 /* c */}. The output should be valid JSON with no other explanation or text.'
-        ]);
-
-        const generatedText = await result.response.text();
-        const toJson = generatedText.split("```json")[1]?.split("```")[0];
-
-        if (!toJson) {
-            return NextResponse.json({ error: "Error processing file" }, { status: 500 });
-        }
-
-        const parsedQuestions = JSON.parse(toJson.trim());
-
-        if (Array.isArray(parsedQuestions) && parsedQuestions.every(isValidQuizQuestion)) {
-            return NextResponse.json({ status: "success", questions: parsedQuestions });
-        } else {
-            throw new Error("Invalid question format");
-        }
+        return NextResponse.json({ questions: quizQuestions });
 
     } catch (error) {
         console.error(error);
