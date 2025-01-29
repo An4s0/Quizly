@@ -208,7 +208,8 @@ const Quiz: React.FC<QuizProps> = ({ setError, file, setFile, setShowQuiz }) => 
                         <div className="text-center">
                             <h2 className="text-3xl font-bold mb-6">No Questions Found</h2>
                             <p className="text-lg mb-8">
-                                Please try again or upload a smallest file.
+                                Please try again or upload a smallest file. <br />
+                                The issue might be related to the API not being available or configured correctly.
                             </p>
                             <button
                                 onClick={() => {
